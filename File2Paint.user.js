@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         GameMale 你画我猜成图上传工具
 // @namespace    https://www.gamemale.com
-// @version 2.3
-// @description  一键上传成图，支持本地文件和链接图片
+// @version 2.4
+// @description  一键上传成图，支持本地文件、链接图片和剪贴板粘贴
 // @author       Higanoneko & user_login & 阿不思的落胤
 // @match        https://www.gamemale.com/plugin.php?id=viewui_draw&mod=list&ac=draw
 // @license      MIT
@@ -70,6 +70,28 @@ window.onload = (function() {
         };
         testImg.src=url
     }
+
+    function handleClipboardPaste(e){
+        var items=e.clipboardData.items;
+        for(var i=0;i<items.length;i++){
+            if(items[i].type.indexOf('image')!==-1){
+                var blob=items[i].getAsFile();
+                var reader=new FileReader();
+                reader.onload=function(evt){
+                    img.src=evt.target.result
+                };
+                reader.readAsDataURL(blob);
+                e.preventDefault();
+                break
+            }
+        }
+    }
+
+    // 页面全局 Ctrl+V 粘贴（非输入框焦点时生效）
+    document.addEventListener('paste',function(e){
+        if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.isContentEditable) return;
+        handleClipboardPaste(e);
+    });
 
     // 在原有按钮后面添加"导入图片"按钮
     var uploadBtn=document.createElement('button');
@@ -158,6 +180,29 @@ window.onload = (function() {
         urlWrap.appendChild(urlBtn);
         section2.appendChild(urlWrap);
         content.appendChild(section2);
+
+        // 分隔
+        var sep2=document.createElement('div');
+        sep2.style.cssText='border-top:1px dashed #DDD;margin:15px 0;';
+        content.appendChild(sep2);
+
+        // 剪贴板粘贴
+        var section3=document.createElement('div');
+        var label3=document.createElement('div');
+        label3.style.cssText='margin-bottom:6px;font-weight:bold;color:#333;';
+        label3.textContent='剪贴板粘贴：';
+        section3.appendChild(label3);
+
+        var pasteArea=document.createElement('div');
+        pasteArea.textContent='点击此处后按 Ctrl+V 粘贴图片';
+        pasteArea.tabIndex=0;
+        pasteArea.style.cssText='display:flex;align-items:center;justify-content:center;height:70px;border:2px dashed #CCC;border-radius:6px;color:#999;cursor:pointer;font-size:13px;transition:border-color .2s,color .2s;outline:none;';
+        pasteArea.addEventListener('mouseover',function(){ this.style.borderColor='#2B7ACD';this.style.color='#2B7ACD'; });
+        pasteArea.addEventListener('mouseout',function(){ this.style.borderColor='#CCC';this.style.color='#999'; });
+        pasteArea.addEventListener('click',function(){ this.focus(); });
+        pasteArea.addEventListener('paste',handleClipboardPaste);
+        section3.appendChild(pasteArea);
+        content.appendChild(section3);
 
         dlg.appendChild(content);
 
