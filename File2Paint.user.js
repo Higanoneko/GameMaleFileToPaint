@@ -5,7 +5,10 @@
 // @description  一键上传成图，支持本地文件和链接图片
 // @author       Higanoneko & user_login & 阿不思的落胤
 // @match        https://www.gamemale.com/plugin.php?id=viewui_draw&mod=list&ac=draw
+// @license      MIT
 // @grant        none
+// @downloadURL https://update.greasyfork.org/scripts/584229/GameMale%20%E4%BD%A0%E7%94%BB%E6%88%91%E7%8C%9C%E6%88%90%E5%9B%BE%E4%B8%8A%E4%BC%A0%E5%B7%A5%E5%85%B7.user.js
+// @updateURL https://update.greasyfork.org/scripts/584229/GameMale%20%E4%BD%A0%E7%94%BB%E6%88%91%E7%8C%9C%E6%88%90%E5%9B%BE%E4%B8%8A%E4%BC%A0%E5%B7%A5%E5%85%B7.meta.js
 // ==/UserScript==
 
 window.onload = (function() {
