@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GameMale 你画我猜成图上传工具
 // @namespace    https://www.gamemale.com
-// @version 2.4
+// @version 2.5
 // @description  一键上传成图，支持本地文件、链接图片和剪贴板粘贴
 // @author       Higanoneko & user_login & 阿不思的落胤
 // @match        https://www.gamemale.com/plugin.php?id=viewui_draw&mod=list&ac=draw
@@ -23,28 +23,33 @@ window.onload = (function() {
     var ratio=devicePixelRatio/backingStoreRatio;ctx.scale(ratio,ratio);
     padding=padding*ratio;ct.style.borderWidth='1px';
     ct.style.borderStyle='solid';
-    var img=new Image();
-    img.onload=function(){
+    // 缩放并居中绘制图片到画板（统一入口）
+    function drawToCanvas(sourceImg){
         var sh=347*ratio;
         var sw=500*ratio;
-        var h=img.height;
-        var w=img.width;
+        var h=sourceImg.height;
+        var w=sourceImg.width;
         var ph=sh-padding*2;
         var pw=sw-padding*2;
         ct.height=sh;
         ct.width=sw;
-        ct.style.height=sh;
-        ct.style.width=sw;
+        ct.style.height=sh+'px';
+        ct.style.width=sw+'px';
         ctx.clearRect(0,0,ct.width,ct.height);
         if(w/h>=pw/ph){
             h=h*(pw/w);
             w=pw;
-            ctx.drawImage(img,padding,padding+(ph-h)/2,w,h)
+            ctx.drawImage(sourceImg,padding,padding+(ph-h)/2,w,h)
         }else{
             w=w*(ph/h);
             h=ph;
-            ctx.drawImage(img,padding+(pw-w)/2,padding,w,h)
+            ctx.drawImage(sourceImg,padding+(pw-w)/2,padding,w,h)
         }
+    }
+
+    var img=new Image();
+    img.onload=function(){
+        drawToCanvas(img)
     };
 
     function selectImage(file){
@@ -61,12 +66,14 @@ window.onload = (function() {
         var testImg=new Image();
         testImg.crossOrigin='anonymous';
         testImg.onload=function(){
-            img.crossOrigin='anonymous';
-            img.src=url
+            drawToCanvas(testImg)
         };
         testImg.onerror=function(){
-            img.crossOrigin=null;
-            img.src=url
+            var fallbackImg=new Image();
+            fallbackImg.onload=function(){
+                drawToCanvas(fallbackImg)
+            };
+            fallbackImg.src=url
         };
         testImg.src=url
     }
@@ -78,7 +85,11 @@ window.onload = (function() {
                 var blob=items[i].getAsFile();
                 var reader=new FileReader();
                 reader.onload=function(evt){
-                    img.src=evt.target.result
+                    var pasteImg=new Image();
+                    pasteImg.onload=function(){
+                        drawToCanvas(pasteImg)
+                    };
+                    pasteImg.src=evt.target.result
                 };
                 reader.readAsDataURL(blob);
                 e.preventDefault();
