@@ -6,7 +6,7 @@
 // @author       Higanoneko & user_login & 阿不思的落胤
 // @match        https://www.gamemale.com/plugin.php?id=viewui_draw&mod=list&ac=draw
 // @license      MIT
-// @grant        none
+// @grant        GM_xmlhttpRequest
 // @downloadURL https://update.greasyfork.org/scripts/584229/GameMale%20%E4%BD%A0%E7%94%BB%E6%88%91%E7%8C%9C%E6%88%90%E5%9B%BE%E4%B8%8A%E4%BC%A0%E5%B7%A5%E5%85%B7.user.js
 // @updateURL https://update.greasyfork.org/scripts/584229/GameMale%20%E4%BD%A0%E7%94%BB%E6%88%91%E7%8C%9C%E6%88%90%E5%9B%BE%E4%B8%8A%E4%BC%A0%E5%B7%A5%E5%85%B7.meta.js
 // ==/UserScript==
@@ -63,17 +63,37 @@ window.onload = (function() {
 
     function loadImageFromUrl(url){
         if(!url) return;
+        // 优先尝试 CORS 加载，成功则直接绘制（零额外请求）
         var testImg=new Image();
         testImg.crossOrigin='anonymous';
         testImg.onload=function(){
             drawToCanvas(testImg)
         };
         testImg.onerror=function(){
-            var fallbackImg=new Image();
-            fallbackImg.onload=function(){
-                drawToCanvas(fallbackImg)
-            };
-            fallbackImg.src=url
+            // CORS 失败 → 使用 GM_xmlhttpRequest 绕过跨域限制下载为 Blob
+            if(typeof GM_xmlhttpRequest!=='undefined'){
+                GM_xmlhttpRequest({
+                    method:'GET',
+                    url:url,
+                    responseType:'blob',
+                    onload:function(resp){
+                        var reader=new FileReader();
+                        reader.onload=function(evt){
+                            var dataImg=new Image();
+                            dataImg.onload=function(){
+                                drawToCanvas(dataImg)
+                            };
+                            dataImg.src=evt.target.result
+                        };
+                        reader.readAsDataURL(resp.response)
+                    },
+                    onerror:function(){
+                        alert('图片下载失败，请检查链接是否有效');
+                    }
+                })
+            }else{
+                alert('图片跨域加载失败，请尝试保存到本地后上传');
+            }
         };
         testImg.src=url
     }
